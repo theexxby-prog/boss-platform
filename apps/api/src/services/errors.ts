@@ -14,3 +14,10 @@ export class ValidationError extends ServiceError {
     this.name = "ValidationError";
   }
 }
+
+export class BantQualificationError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 500, details);
+    this.name = "BantQualificationError";
+  }
+}
