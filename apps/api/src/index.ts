@@ -4,6 +4,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 
 import { authRouter } from "./routes/auth";
+import { leadsRouter } from "./routes/leads";
 import { corsHeaders } from "./cors";
 import { ApiError, fail, makeRequestId, ok } from "./http";
 import type { AppVariables, EnvBindings } from "./types";
@@ -30,6 +31,7 @@ app.use(
 
 app.get("/health", (c) => ok(c, { status: "ok", ts: new Date().toISOString() }));
 app.route("/auth", authRouter);
+app.route("/leads", leadsRouter);
 
 app.notFound((c) => fail(c, 404, "NOT_FOUND", "Route not found"));
 
