@@ -1,0 +1,10 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./packages/types" },
+    { "path": "./packages/utils" },
+    { "path": "./apps/api" },
+    { "path": "./apps/portal" },
+    { "path": "./apps/admin" }
+  ]
+}

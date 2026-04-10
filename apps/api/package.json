@@ -1,0 +1,21 @@
+{
+  "name": "@boss/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -b",
+    "check": "tsc --noEmit -p tsconfig.json",
+    "dev": "wrangler dev src/index.ts"
+  },
+  "dependencies": {
+    "@boss/types": "workspace:*",
+    "hono": "^4.6.12",
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260401.0",
+    "typescript": "^5.8.2",
+    "wrangler": "^4.11.1"
+  }
+}
