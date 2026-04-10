@@ -21,3 +21,24 @@ export class BantQualificationError extends ServiceError {
     this.name = "BantQualificationError";
   }
 }
+
+export class QueryError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 500, details);
+    this.name = "QueryError";
+  }
+}
+
+export class EnrichmentError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 502, details);
+    this.name = "EnrichmentError";
+  }
+}
+
+export class ProcessingError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 500, details);
+    this.name = "ProcessingError";
+  }
+}

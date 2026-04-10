@@ -4,6 +4,7 @@ export interface EnvBindings {
   DB: D1Database;
   KV: KVNamespace;
   R2: R2Bucket;
+  QUEUE: Queue;
   LEAD_QUEUE: Queue;
   JWT_SECRET: string;
   API_KEY_SALT: string;
