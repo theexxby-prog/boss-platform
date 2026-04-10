@@ -148,6 +148,7 @@ describe("processLead", () => {
       product_tier: "mql",
       leads_ordered: 100,
       leads_delivered: 0,
+      cpl: 10,
       daily_cap: 20,
       status: "active",
       custom_questions: "[]",

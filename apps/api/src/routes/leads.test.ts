@@ -52,6 +52,7 @@ describe("routes/leads", () => {
       product_tier: "mql",
       leads_ordered: 100,
       leads_delivered: 0,
+      cpl: 10,
       daily_cap: 10,
       status: "active",
       custom_questions: "[]",

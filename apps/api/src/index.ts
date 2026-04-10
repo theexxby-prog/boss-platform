@@ -4,7 +4,14 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 
 import { authRouter } from "./routes/auth";
+import { aggregatorsRouter } from "./routes/aggregators";
+import { campaignsRouter } from "./routes/campaigns";
+import { clientsRouter } from "./routes/clients";
+import { deliveryRouter } from "./routes/delivery";
+import { domainsRouter } from "./routes/domains";
+import { invoicesRouter } from "./routes/invoices";
 import { leadsRouter } from "./routes/leads";
+import { webhooksRouter } from "./routes/webhooks";
 import { corsHeaders } from "./cors";
 import { ApiError, fail, makeRequestId, ok } from "./http";
 import type { AppVariables, EnvBindings } from "./types";
@@ -32,6 +39,13 @@ app.use(
 app.get("/health", (c) => ok(c, { status: "ok", ts: new Date().toISOString() }));
 app.route("/auth", authRouter);
 app.route("/leads", leadsRouter);
+app.route("/campaigns", campaignsRouter);
+app.route("/clients", clientsRouter);
+app.route("/aggregators", aggregatorsRouter);
+app.route("/delivery", deliveryRouter);
+app.route("/invoices", invoicesRouter);
+app.route("/domains", domainsRouter);
+app.route("/webhooks", webhooksRouter);
 
 app.notFound((c) => fail(c, 404, "NOT_FOUND", "Route not found"));
 

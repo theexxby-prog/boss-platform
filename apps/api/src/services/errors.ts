@@ -42,3 +42,24 @@ export class ProcessingError extends ServiceError {
     this.name = "ProcessingError";
   }
 }
+
+export class DeliveryError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 500, details);
+    this.name = "DeliveryError";
+  }
+}
+
+export class DomainRotationError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 500, details);
+    this.name = "DomainRotationError";
+  }
+}
+
+export class WebhookError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 401, details);
+    this.name = "WebhookError";
+  }
+}
