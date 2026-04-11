@@ -49,7 +49,7 @@ export default function Reports() {
   ]
 
   return (
-    <div className="fade-up">
+    <div className="fade-up p-6 max-w-6xl mx-auto">
       <div className="px-6 pt-6 pb-4 flex items-center justify-between">
         <div>
           <h1 className="text-lg font-medium text-slate-100">Reports</h1>
@@ -112,7 +112,7 @@ export default function Reports() {
       </div>
 
       {/* ICP score distribution */}
-      <div className="mx-6 mb-6 card p-5">
+      <div className="glass p-5 mb-6">
         <h2 className="text-sm font-medium text-slate-300 mb-4">ICP score distribution</h2>
         {loading ? <Skeleton className="h-44 w-full" /> : (
           <ResponsiveContainer width="100%" height={180}>

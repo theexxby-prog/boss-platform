@@ -40,7 +40,7 @@ export default function Settings() {
   }
 
   return (
-    <div className="fade-up">
+    <div className="fade-up p-6 max-w-6xl mx-auto">
       <div className="px-6 pt-6 pb-4">
         <h1 className="text-lg font-medium text-slate-100">Settings</h1>
         <p className="text-slate-500 text-sm mt-0.5">ICP profile, API keys, and preferences</p>
@@ -68,7 +68,7 @@ export default function Settings() {
             disabled={!valid}
             className={`px-4 py-2 rounded text-sm font-medium transition-colors ${
               valid
-                ? 'bg-boss hover:bg-boss-light text-white'
+                ? 'style={{ background: "var(--primary-mid)" }} text-white'
                 : 'bg-slate-700 text-slate-500 cursor-not-allowed'
             }`}
           >
@@ -80,14 +80,14 @@ export default function Settings() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-slate-300">API keys</h2>
-            <button className="text-xs text-boss-light hover:text-white transition-colors">
+            <button className="text-xs style={{ color: "var(--primary-mid)" }} hover:text-white transition-colors">
               + Generate new key
             </button>
           </div>
           {apiKeys.length ? (
             <div className="space-y-2">
               {apiKeys.map(k => (
-                <div key={k.id} className="flex items-center justify-between px-3 py-2 rounded bg-slate-800/50 border border-white/06">
+                <div key={k.id} className="flex items-center justify-between px-3 py-2 rounded bg-black/03 border-none">
                   <div>
                     <p className="text-slate-200 text-sm">{k.name}</p>
                     <p className="mono text-slate-500 text-xs mt-0.5">{k.prefix}••••••••</p>

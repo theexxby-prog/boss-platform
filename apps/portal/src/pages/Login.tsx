@@ -16,59 +16,73 @@ export default function Login({ onLogin }: { onLogin: (token: string) => void })
       onLogin(token)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Login failed')
-    } finally {
-      setLoading(false)
-    }
+    } finally { setLoading(false) }
+  }
+
+  const inputStyle = {
+    width: '100%', background: 'rgba(0,0,0,0.04)', border: '1px solid var(--border)',
+    borderRadius: 10, padding: '10px 14px', fontSize: 14, color: 'var(--text-primary)',
+    outline: 'none', transition: 'border-color 0.15s',
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: '#0F1923' }}>
-      <div className="w-full max-w-sm fade-up">
+    <div className="min-h-screen flex items-center justify-center px-4"
+      style={{ background: 'var(--main-bg)' }}>
+      {/* Subtle gradient bg */}
+      <div className="absolute inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(46,95,163,0.08) 0%, transparent 70%)' }} />
+
+      <div className="w-full max-w-sm fade-up relative">
         {/* Logo */}
-        <div className="flex items-center gap-3 mb-10 justify-center">
-          <div className="w-8 h-8 rounded-lg bg-boss flex items-center justify-center">
-            <span className="text-white font-bold mono">B</span>
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
+            style={{ background: 'var(--primary-mid)', boxShadow: '0 8px 24px rgba(46,95,163,0.35)' }}>
+            <span className="text-white font-bold mono text-xl">B</span>
           </div>
-          <span className="text-slate-100 font-medium text-lg tracking-tight">BOSS Portal</span>
+          <h1 className="text-xl font-semibold" style={{ color: 'var(--text-primary)' }}>BOSS Portal</h1>
+          <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Sign in to your account</p>
         </div>
 
-        <div className="card p-6">
-          <h1 className="text-slate-100 font-medium mb-1">Sign in</h1>
-          <p className="text-slate-500 text-sm mb-6">Access your campaign dashboard</p>
-
+        <div className="glass-strong p-6">
           <div className="space-y-4">
             <div>
-              <label className="text-xs text-slate-500 block mb-1.5">Email</label>
-              <input
-                type="email" value={email} onChange={e => setEmail(e.target.value)}
+              <label className="block text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                Email address
+              </label>
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submit()}
-                placeholder="you@company.com"
-                className="w-full bg-slate-800 border border-white/08 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-boss/60 transition-colors"
-              />
+                placeholder="you@company.com" style={inputStyle}
+                onFocus={e => (e.target.style.borderColor = 'var(--primary-mid)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
             </div>
             <div>
-              <label className="text-xs text-slate-500 block mb-1.5">Password</label>
-              <input
-                type="password" value={password} onChange={e => setPassword(e.target.value)}
+              <label className="block text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                Password
+              </label>
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submit()}
-                placeholder="••••••••"
-                className="w-full bg-slate-800 border border-white/08 rounded-lg px-3 py-2.5 text-sm text-slate-200 placeholder-slate-600 focus:outline-none focus:border-boss/60 transition-colors"
-              />
+                placeholder="••••••••" style={inputStyle}
+                onFocus={e => (e.target.style.borderColor = 'var(--primary-mid)')}
+                onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
             </div>
 
-            {error && <p className="text-red-400 text-xs">{error}</p>}
+            {error && (
+              <div className="px-3 py-2 rounded-lg text-sm" style={{ background: 'var(--danger-bg)', color: 'var(--danger)' }}>
+                {error}
+              </div>
+            )}
 
-            <button
-              onClick={submit} disabled={loading}
-              className="w-full bg-boss hover:bg-boss-light disabled:opacity-50 text-white rounded-lg py-2.5 text-sm font-medium transition-colors"
-            >
+            <button onClick={submit} disabled={loading}
+              className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
+              style={{ background: loading ? 'rgba(46,95,163,0.5)' : 'var(--primary-mid)',
+                boxShadow: loading ? 'none' : '0 4px 12px rgba(46,95,163,0.3)' }}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </div>
         </div>
 
-        <p className="text-center text-slate-600 text-xs mt-6">
-          BOSS — Business Optimization & Syndication Services
+        <p className="text-center text-xs mt-6" style={{ color: 'var(--text-muted)' }}>
+          Business Optimization & Syndication Services
         </p>
       </div>
     </div>

@@ -1,0 +1,36 @@
+# ─── BOSS Platform — Local Development Environment ───────────────────────────
+# Copy this file to .dev.vars (gitignored) and fill in your real values.
+# wrangler dev reads .dev.vars automatically.
+# NEVER commit .dev.vars to git.
+
+# ─── AI ───────────────────────────────────────────────────────────────────────
+ANTHROPIC_API_KEY=sk-ant-REPLACE_ME
+
+# ─── Data enrichment ──────────────────────────────────────────────────────────
+ZEROBOUNCE_API_KEY=REPLACE_ME
+APOLLO_API_KEY=REPLACE_ME
+CLEARBIT_API_KEY=REPLACE_ME
+
+# ─── Outreach & CRM ───────────────────────────────────────────────────────────
+INSTANTLY_API_KEY=REPLACE_ME
+HUBSPOT_ACCESS_TOKEN=REPLACE_ME
+
+# ─── Invoicing ────────────────────────────────────────────────────────────────
+QUICKBOOKS_CLIENT_ID=REPLACE_ME
+QUICKBOOKS_CLIENT_SECRET=REPLACE_ME
+QUICKBOOKS_REFRESH_TOKEN=REPLACE_ME
+
+# ─── Calendar ─────────────────────────────────────────────────────────────────
+GOOGLE_CLIENT_ID=REPLACE_ME
+GOOGLE_CLIENT_SECRET=REPLACE_ME
+GOOGLE_REFRESH_TOKEN=REPLACE_ME
+
+# ─── Notifications ────────────────────────────────────────────────────────────
+SLACK_WEBHOOK_URL=https://hooks.slack.com/services/REPLACE_ME
+
+# ─── Auth secrets (generate with: openssl rand -hex 32) ──────────────────────
+JWT_SECRET=REPLACE_WITH_64_CHAR_RANDOM_STRING
+API_KEY_SALT=REPLACE_WITH_32_CHAR_RANDOM_STRING
+
+# ─── Email warmup (optional — deliverability monitor only) ───────────────────
+LEMWARM_API_KEY=REPLACE_ME

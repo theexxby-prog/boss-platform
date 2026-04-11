@@ -13,7 +13,7 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
       <div className="space-y-6">
         {/* Contact */}
         <section>
-          <h3 className="text-xs text-slate-500 uppercase tracking-wider mb-3">Contact</h3>
+          <h3 className="text-xs text-muted uppercase tracking-wider mb-3">Contact</h3>
           <div className="space-y-2">
             {[
               ['Email', lead.email],
@@ -25,8 +25,8 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
               ['Seniority', lead.seniority],
             ].map(([l, v]) => v ? (
               <div key={l} className="flex justify-between text-sm">
-                <span className="text-slate-500">{l}</span>
-                <span className="text-slate-200 mono">{v}</span>
+                <span className="text-muted">{l}</span>
+                <span className="text-primary mono">{v}</span>
               </div>
             ) : null)}
           </div>
@@ -34,7 +34,7 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
 
         {/* ICP Score */}
         <section>
-          <h3 className="text-xs text-slate-500 uppercase tracking-wider mb-3">ICP Score</h3>
+          <h3 className="text-xs text-muted uppercase tracking-wider mb-3">ICP Score</h3>
           <div className="flex items-center gap-3">
             <ScoreBadge score={lead.icp_score} />
             <StatusPill status={lead.status} />
@@ -44,7 +44,7 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         {/* BANT */}
         {lead.bant_score !== undefined && (
           <section>
-            <h3 className="text-xs text-slate-500 uppercase tracking-wider mb-3">BANT Qualification</h3>
+            <h3 className="text-xs text-muted uppercase tracking-wider mb-3">BANT Qualification</h3>
             <div className="grid grid-cols-2 gap-2 mb-3">
               {[
                 ['Budget', lead.bant_budget],
@@ -52,14 +52,14 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
                 ['Need', lead.bant_need],
                 ['Timeline', lead.bant_timeline],
               ].map(([l, v]) => (
-                <div key={l} className="card px-3 py-2">
-                  <p className="text-slate-500 text-xs mb-1">{l}</p>
-                  <p className="text-slate-200 text-xs mono">{v ?? '—'}</p>
+                <div key={l} className="glass px-3 py-2">
+                  <p className="text-muted text-xs mb-1">{l}</p>
+                  <p className="text-primary text-xs mono">{v ?? '—'}</p>
                 </div>
               ))}
             </div>
             {lead.bant_notes && (
-              <p className="text-slate-400 text-xs leading-relaxed">{lead.bant_notes}</p>
+              <p className="text-secondary text-xs leading-relaxed">{lead.bant_notes}</p>
             )}
           </section>
         )}
@@ -67,12 +67,12 @@ function LeadDetail({ lead, onClose }: { lead: Lead; onClose: () => void }) {
         {/* Custom Q Answers */}
         {lead.custom_answers && lead.custom_answers.length > 0 && (
           <section>
-            <h3 className="text-xs text-slate-500 uppercase tracking-wider mb-3">Custom Q&A</h3>
+            <h3 className="text-xs text-muted uppercase tracking-wider mb-3">Custom Q&A</h3>
             <div className="space-y-3">
               {lead.custom_answers.map((qa, i) => (
-                <div key={i} className="card px-3 py-2">
-                  <p className="text-slate-400 text-xs mb-1">{qa.question}</p>
-                  <p className="text-slate-200 text-sm">{qa.answer}</p>
+                <div key={i} className="glass px-3 py-2">
+                  <p className="text-secondary text-xs mb-1">{qa.question}</p>
+                  <p className="text-primary text-sm">{qa.answer}</p>
                 </div>
               ))}
             </div>
@@ -119,9 +119,9 @@ function CampaignDetail({ campaign, onBack }: { campaign: Campaign; onBack: () =
   }
 
   return (
-    <div className="fade-up">
+    <div className="fade-up p-6 max-w-6xl mx-auto">
       <div className="px-6 pt-6 pb-4 flex items-center gap-3">
-        <button onClick={onBack} className="text-slate-500 hover:text-slate-300 transition-colors text-sm">← Back</button>
+        <button onClick={onBack} className="text-muted hover:text-slate-300 transition-colors text-sm">← Back</button>
         <div>
           <h1 className="text-lg font-medium text-slate-100">{campaign.name}</h1>
           <div className="flex items-center gap-2 mt-0.5">
@@ -133,19 +133,19 @@ function CampaignDetail({ campaign, onBack }: { campaign: Campaign; onBack: () =
 
       <div className="px-6 mb-5">
         <ProgressBar delivered={campaign.leads_delivered} ordered={campaign.leads_ordered} />
-        <div className="flex gap-6 mt-3 text-sm text-slate-400 mono">
-          <span>CPL: <span className="text-slate-200">${campaign.cpl}</span></span>
-          <span>Rejected: <span className="text-slate-200">{campaign.leads_rejected}</span></span>
+        <div className="flex gap-6 mt-3 text-sm text-secondary mono">
+          <span>CPL: <span className="text-primary">${campaign.cpl}</span></span>
+          <span>Rejected: <span className="text-primary">{campaign.leads_rejected}</span></span>
         </div>
       </div>
 
-      <div className="mx-6 card">
-        <div className="px-5 py-3 border-b border-white/06 flex items-center gap-3 flex-wrap">
+      <div className="glass">
+        <div className="px-5 py-3 border-b border-light flex items-center gap-3 flex-wrap">
           <h2 className="text-sm font-medium text-slate-300 flex-1">Leads</h2>
           <select
             value={filters.status}
             onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
-            className="bg-slate-800 border border-white/08 rounded px-2 py-1 text-xs text-slate-300"
+            className="bg-black/05 border border-white/08 rounded px-2 py-1 text-xs text-slate-300"
           >
             <option value="">All statuses</option>
             {['accepted', 'reviewing', 'rejected', 'duplicate'].map(s => (
@@ -155,13 +155,13 @@ function CampaignDetail({ campaign, onBack }: { campaign: Campaign; onBack: () =
           <select
             value={filters.min_score}
             onChange={e => setFilters(f => ({ ...f, min_score: e.target.value }))}
-            className="bg-slate-800 border border-white/08 rounded px-2 py-1 text-xs text-slate-300"
+            className="bg-black/05 border border-white/08 rounded px-2 py-1 text-xs text-slate-300"
           >
             <option value="">Any score</option>
             <option value="70">70+ (High)</option>
             <option value="45">45+ (Mid)</option>
           </select>
-          <button onClick={exportCsv} className="text-xs text-boss-light hover:text-white transition-colors">
+          <button onClick={exportCsv} className="text-xs style={{ color: "var(--primary-mid)" }} hover:text-white transition-colors">
             Export CSV
           </button>
         </div>
@@ -208,13 +208,13 @@ export default function Campaigns({ initialId }: { initialId?: string }) {
   if (selected) return <CampaignDetail campaign={selected} onBack={() => setSelected(null)} />
 
   return (
-    <div className="fade-up">
+    <div className="fade-up p-6 max-w-6xl mx-auto">
       <div className="px-6 pt-6 pb-4">
         <h1 className="text-lg font-medium text-slate-100">Campaigns</h1>
-        <p className="text-slate-500 text-sm mt-0.5">All campaigns across your account</p>
+        <p className="text-muted text-sm mt-0.5">All campaigns across your account</p>
       </div>
 
-      <div className="mx-6 card">
+      <div className="glass">
         {loading ? (
           <div className="p-4 space-y-3">{[...Array(4)].map((_, i) => <Skeleton key={i} className="h-16" />)}</div>
         ) : !campaigns.length ? (
@@ -228,14 +228,14 @@ export default function Campaigns({ initialId }: { initialId?: string }) {
               >
                 <div className="flex items-start justify-between gap-3 mb-2">
                   <div>
-                    <span className="text-slate-200 text-sm font-medium">{c.name}</span>
+                    <span className="text-primary text-sm font-medium">{c.name}</span>
                     <div className="flex items-center gap-2 mt-1">
                       <TierBadge tier={c.product_tier} />
                       <StatusPill status={c.status} />
-                      <span className="text-slate-500 mono text-xs">${c.cpl}/lead</span>
+                      <span className="text-muted mono text-xs">${c.cpl}/lead</span>
                     </div>
                   </div>
-                  <span className="text-slate-500 mono text-xs whitespace-nowrap">
+                  <span className="text-muted mono text-xs whitespace-nowrap">
                     {c.leads_rejected} rejected
                   </span>
                 </div>

@@ -1,7 +1,7 @@
 import { createRoot } from 'react-dom/client'
 import { useState, useEffect } from 'react'
 import './index.css'
-import { Nav } from './components/ui'
+import { Sidebar } from './components/ui'
 import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import Campaigns from './pages/Campaigns'
@@ -15,12 +15,11 @@ function App() {
 
   useEffect(() => {
     const hash = window.location.hash.slice(1)
-    if (hash) setPage(hash.split('/')[0])
+    if (hash) { setPage(hash.split('/')[0]); setPageParam(hash.split('/')[1]) }
   }, [])
 
   const navigate = (p: string, id?: string) => {
-    setPage(p)
-    setPageParam(id)
+    setPage(p); setPageParam(id)
     window.location.hash = id ? `${p}/${id}` : p
   }
 
@@ -34,9 +33,9 @@ function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Nav current={page} onChange={p => navigate(p)} />
-      <main className="flex-1 overflow-auto">
+    <div className="flex h-screen w-screen overflow-hidden" style={{ background: 'var(--main-bg)' }}>
+      <Sidebar current={page} onChange={p => navigate(p)} />
+      <main className="flex-1 min-w-0 overflow-y-auto">
         {pages[page] ?? pages.dashboard}
       </main>
     </div>
