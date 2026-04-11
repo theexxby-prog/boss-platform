@@ -14,12 +14,16 @@ export function rateLimit(options: RateLimitOptions) {
       return next();
     }
 
-    const auth = c.get("auth");
-    if (!auth) throw new ApiError(401, "UNAUTHORIZED", "Auth context is required before rate limiting");
-
     const window = Math.floor(Date.now() / 1000 / options.windowSeconds);
-    const actor = auth.userId ?? auth.apiKeyId ?? "anonymous";
-    const key = `rl:${auth.tenantId}:${actor}:${window}`;
+
+    // Use auth context if available, fall back to IP for public routes like /login
+    const auth = c.get("auth");
+    const actor = auth
+      ? (auth.userId ?? auth.apiKeyId ?? "anon")
+      : (c.req.header("cf-connecting-ip") ?? c.req.header("x-forwarded-for") ?? "unknown");
+    const scope = auth ? `${auth.tenantId}:${actor}` : `ip:${actor}`;
+    const key = `rl:${scope}:${window}`;
+
     const currentRaw = await c.env.KV.get(key);
     const current = Number(currentRaw ?? "0");
 
