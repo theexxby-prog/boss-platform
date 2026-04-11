@@ -74,16 +74,18 @@ wrangler d1 execute boss-platform --file=apps/api/src/db/schema.sql
 
 ### 6. Create your first admin user
 
-```bash
-# Local only — insert a test user directly into D1
-wrangler d1 execute boss-platform --local --command="
-  INSERT INTO tenants (id, name, slug, plan, status, created_at, updated_at)
-  VALUES ('tenant-1', 'BOSS HQ', 'boss-hq', 'enterprise', 'active', unixepoch()*1000, unixepoch()*1000);
+Run the interactive seed script — it reads your salt from `.dev.vars`, prompts for a password, hashes it correctly, and inserts the tenant + user into your local D1:
 
-  INSERT INTO users (id, tenant_id, email, password_hash, role, status, created_at, updated_at)
-  VALUES ('user-1', 'tenant-1', 'vishal@bosshq.com', 'TEMP_HASH', 'owner', 'active', unixepoch()*1000, unixepoch()*1000);
-"
+```bash
+pnpm seed
 ```
+
+It will ask for email, tenant slug, tenant name, and password. The defaults work fine for local dev. When it's done it prints the exact credentials to paste into the portal login.
+
+**Portal login fields:**
+- Account ID → the tenant slug (e.g. `boss-hq`)
+- Email → your admin email
+- Password → what you just set
 
 ---
 
@@ -92,8 +94,7 @@ wrangler d1 execute boss-platform --local --command="
 ### Start the API
 
 ```bash
-cd apps/api
-wrangler dev
+pnpm dev:api
 # → API running at http://localhost:8787
 # → Health check: http://localhost:8787/api/v1/health
 ```
@@ -101,19 +102,30 @@ wrangler dev
 ### Start the client portal
 
 ```bash
+# In a new terminal tab
 cd apps/portal
 echo "VITE_API_URL=http://localhost:8787/api/v1" > .env.local
 pnpm dev
 # → Portal running at http://localhost:3000
 ```
 
+Or from the root: `pnpm dev:portal` (set .env.local first)
+
 ### Start the admin panel
 
 ```bash
+# In another terminal tab
 cd apps/admin
 echo "VITE_API_URL=http://localhost:8787/api/v1" > .env.local
 pnpm dev
 # → Admin running at http://localhost:3001
+```
+
+### Typecheck everything
+
+```bash
+pnpm typecheck
+# → Should print: ✓ Zero TS errors
 ```
 
 ---

@@ -4,8 +4,14 @@
   "version": "0.1.0",
   "packageManager": "pnpm@10.0.0",
   "scripts": {
-    "build": "pnpm -r build",
-    "check": "pnpm -r check",
-    "dev:api": "pnpm --filter @boss/api dev"
+    "build":        "pnpm -r build",
+    "check":        "pnpm -r check",
+    "dev:api":      "cd apps/api && wrangler dev",
+    "dev:portal":   "cd apps/portal && pnpm dev",
+    "dev:admin":    "cd apps/admin && pnpm dev",
+    "db:migrate":   "wrangler d1 execute boss-platform --local --file=apps/api/src/db/schema.sql",
+    "db:migrate:prod": "wrangler d1 execute boss-platform --file=apps/api/src/db/schema.sql",
+    "seed":         "node scripts/seed-local.mjs",
+    "typecheck":    "cd packages/types && npx tsc && cd ../../apps/api && npx tsc --noEmit"
   }
 }
