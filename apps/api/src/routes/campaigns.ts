@@ -67,7 +67,7 @@ campaignsRouter.get("/", async (c) => {
     status: c.req.query("status"),
     tier: tier ? mapTier(tier) : undefined,
   });
-  return ok(c, { campaigns, count: campaigns.length });
+  return ok(c, campaigns);
 });
 
 campaignsRouter.get("/:campaignId", async (c) => {

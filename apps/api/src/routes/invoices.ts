@@ -38,7 +38,7 @@ invoicesRouter.get("/", async (c) => {
   const total_ar = invoices
     .filter((invoice) => invoice.status !== "paid")
     .reduce((acc, invoice) => acc + invoice.total, 0);
-  return ok(c, { invoices, total_ar });
+  return ok(c, invoices);
 });
 
 invoicesRouter.get("/:invoiceId", async (c) => {
