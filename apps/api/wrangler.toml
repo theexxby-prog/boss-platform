@@ -22,12 +22,12 @@ crons = [
 [[d1_databases]]
 binding = "DB"
 database_name = "boss-platform"
-database_id = "REPLACE_WITH_D1_DATABASE_ID"
+database_id = "7f2e2d14-e404-4035-8878-26b4d816b44c"
 
 # ─── KV Namespace ─────────────────────────────────────────────────────────────
 [[kv_namespaces]]
 binding = "KV"
-id = "REPLACE_WITH_KV_NAMESPACE_ID"
+id = "79a7f5521484455ca85d993a84d74ad5"
 
 # ─── R2 Bucket ────────────────────────────────────────────────────────────────
 [[r2_buckets]]
