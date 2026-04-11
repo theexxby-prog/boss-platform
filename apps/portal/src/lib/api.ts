@@ -21,8 +21,8 @@ async function req<T>(path: string, init?: RequestInit): Promise<T> {
 
 export const api = {
   // Auth
-  login: (email: string, password: string) =>
-    req<{ token: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  login: (tenantSlug: string, email: string, password: string) =>
+    req<{ token: string; user: User }>('/auth/login', { method: 'POST', body: JSON.stringify({ tenant_slug: tenantSlug, email, password }) }),
 
   // Campaigns
   getCampaigns: () => req<Campaign[]>('/campaigns'),

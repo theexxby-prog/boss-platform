@@ -96,3 +96,29 @@ invoicesRouter.post("/:invoiceId/chase", async (c) => {
   });
   return created(c, { chase_id, created_at: Date.now() });
 });
+
+// GET /invoices/overdue — used by AR chase cron and n8n backup workflow
+invoicesRouter.get("/overdue", async (c) => {
+  const tenantId = c.get("tenantId");
+  const now = Date.now();
+  const { results } = await c.env.DB.prepare(
+    `SELECT i.*, cl.name AS client_name, cl.billing_email
+     FROM invoices i JOIN clients cl ON cl.id = i.client_id
+     WHERE i.tenant_id = ? AND i.status = 'sent' AND i.due_date < ?
+     ORDER BY i.due_date ASC`
+  ).bind(tenantId, now).all();
+  return ok(c, results ?? []);
+});
+
+// POST /invoices/:invoiceId/mark-paid
+invoicesRouter.post("/:invoiceId/mark-paid", async (c) => {
+  const tenantId = c.get("tenantId");
+  const invoiceId = c.req.param("invoiceId");
+  const now = Date.now();
+  const r = await c.env.DB.prepare(
+    `UPDATE invoices SET status='paid', paid_at=?, updated_at=? WHERE id=? AND tenant_id=?`
+  ).bind(now, now, invoiceId, tenantId).run();
+  if (!r.meta.changes) return fail(c, 404, "NOT_FOUND", "Invoice not found");
+  const invoice = await c.env.DB.prepare(`SELECT * FROM invoices WHERE id=? AND tenant_id=?`).bind(invoiceId, tenantId).first();
+  return ok(c, invoice);
+});

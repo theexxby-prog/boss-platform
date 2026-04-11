@@ -200,7 +200,7 @@ export async function processLead(message: LeadProcessorMessage, env: ProcessLea
       const bantCriteria: BantCriteria = {
         budget_signals: ["budget", "funding", "investment", "allocated", "approved"],
         authority_titles: ["CEO", "CTO", "CFO", "VP", "Director", "Head of", "Owner", "Founder"],
-        need_industries: [], // TODO: Sprint 3 — derive from campaign.bant_need_desc
+        need_industries: [],
         timeline_signals: ["ASAP", "urgent", "this quarter", "Q2", "Q3", "Q4", "end of year"],
       };
 

@@ -2,16 +2,17 @@ import { useState } from 'react'
 import { api } from '../lib/api'
 
 export default function Login({ onLogin }: { onLogin: (token: string) => void }) {
+  const [slug, setSlug] = useState('')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
 
   const submit = async () => {
-    if (!email || !password) return
+    if (!slug || !email || !password) return
     setLoading(true); setError('')
     try {
-      const { token } = await api.login(email, password)
+      const { token } = await api.login(slug, email, password)
       localStorage.setItem('boss_token', token)
       onLogin(token)
     } catch (e) {
@@ -22,18 +23,17 @@ export default function Login({ onLogin }: { onLogin: (token: string) => void })
   const inputStyle = {
     width: '100%', background: 'rgba(0,0,0,0.04)', border: '1px solid var(--border)',
     borderRadius: 10, padding: '10px 14px', fontSize: 14, color: 'var(--text-primary)',
-    outline: 'none', transition: 'border-color 0.15s',
+    outline: 'none', transition: 'border-color 0.15s', fontFamily: 'inherit',
   }
+  const focusIn  = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.borderColor = 'var(--primary-mid)')
+  const focusOut = (e: React.FocusEvent<HTMLInputElement>) => (e.target.style.borderColor = 'var(--border)')
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4"
-      style={{ background: 'var(--main-bg)' }}>
-      {/* Subtle gradient bg */}
+    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: 'var(--main-bg)' }}>
       <div className="absolute inset-0 pointer-events-none"
         style={{ background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(46,95,163,0.08) 0%, transparent 70%)' }} />
 
       <div className="w-full max-w-sm fade-up relative">
-        {/* Logo */}
         <div className="flex flex-col items-center mb-8">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center mb-4"
             style={{ background: 'var(--primary-mid)', boxShadow: '0 8px 24px rgba(46,95,163,0.35)' }}>
@@ -47,13 +47,24 @@ export default function Login({ onLogin }: { onLogin: (token: string) => void })
           <div className="space-y-4">
             <div>
               <label className="block text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
+                Account ID
+              </label>
+              <input value={slug} onChange={e => setSlug(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && submit()}
+                placeholder="your-company" style={inputStyle}
+                onFocus={focusIn} onBlur={focusOut} />
+              <p className="text-xs mt-1" style={{ color: 'var(--text-muted)' }}>
+                Provided by your BOSS account manager
+              </p>
+            </div>
+            <div>
+              <label className="block text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
                 Email address
               </label>
               <input type="email" value={email} onChange={e => setEmail(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submit()}
                 placeholder="you@company.com" style={inputStyle}
-                onFocus={e => (e.target.style.borderColor = 'var(--primary-mid)')}
-                onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
+                onFocus={focusIn} onBlur={focusOut} />
             </div>
             <div>
               <label className="block text-xs font-medium mb-2" style={{ color: 'var(--text-secondary)' }}>
@@ -62,8 +73,7 @@ export default function Login({ onLogin }: { onLogin: (token: string) => void })
               <input type="password" value={password} onChange={e => setPassword(e.target.value)}
                 onKeyDown={e => e.key === 'Enter' && submit()}
                 placeholder="••••••••" style={inputStyle}
-                onFocus={e => (e.target.style.borderColor = 'var(--primary-mid)')}
-                onBlur={e => (e.target.style.borderColor = 'var(--border)')} />
+                onFocus={focusIn} onBlur={focusOut} />
             </div>
 
             {error && (
@@ -72,10 +82,11 @@ export default function Login({ onLogin }: { onLogin: (token: string) => void })
               </div>
             )}
 
-            <button onClick={submit} disabled={loading}
+            <button onClick={submit} disabled={loading || !slug || !email || !password}
               className="w-full py-2.5 rounded-xl text-sm font-semibold text-white transition-all"
-              style={{ background: loading ? 'rgba(46,95,163,0.5)' : 'var(--primary-mid)',
-                boxShadow: loading ? 'none' : '0 4px 12px rgba(46,95,163,0.3)' }}>
+              style={{ background: (!slug || !email || !password || loading) ? 'rgba(46,95,163,0.4)' : 'var(--primary-mid)',
+                boxShadow: (!slug || !email || !password || loading) ? 'none' : '0 4px 12px rgba(46,95,163,0.3)',
+                cursor: (!slug || !email || !password || loading) ? 'not-allowed' : 'pointer' }}>
               {loading ? 'Signing in…' : 'Sign in'}
             </button>
           </div>

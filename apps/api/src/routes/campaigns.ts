@@ -119,3 +119,37 @@ campaignsRouter.get("/:campaignId/stats", async (c) => {
   const stats = await getCampaignDistributionStats(c.env.DB, tenantId, campaign.campaign_id);
   return ok(c, stats);
 });
+
+// POST /campaigns/:campaignId/activate
+campaignsRouter.post("/:campaignId/activate", async (c) => {
+  const tenantId = c.get("tenantId");
+  const campaignId = c.req.param("campaignId");
+  const r = await c.env.DB.prepare(
+    `UPDATE campaigns SET status='active', updated_at=? WHERE id=? AND tenant_id=?`
+  ).bind(Date.now(), campaignId, tenantId).run();
+  if (!r.meta.changes) return fail(c, 404, "NOT_FOUND", "Campaign not found");
+  const campaign = await getCampaignById(c.env.DB, tenantId, campaignId);
+  return ok(c, campaign);
+});
+
+// POST /campaigns/:campaignId/pause
+campaignsRouter.post("/:campaignId/pause", async (c) => {
+  const tenantId = c.get("tenantId");
+  const campaignId = c.req.param("campaignId");
+  const r = await c.env.DB.prepare(
+    `UPDATE campaigns SET status='paused', updated_at=? WHERE id=? AND tenant_id=?`
+  ).bind(Date.now(), campaignId, tenantId).run();
+  if (!r.meta.changes) return fail(c, 404, "NOT_FOUND", "Campaign not found");
+  const campaign = await getCampaignById(c.env.DB, tenantId, campaignId);
+  return ok(c, campaign);
+});
+
+// GET /campaigns/:campaignId/batches
+campaignsRouter.get("/:campaignId/batches", async (c) => {
+  const tenantId = c.get("tenantId");
+  const campaignId = c.req.param("campaignId");
+  const { results } = await c.env.DB.prepare(
+    `SELECT * FROM delivery_batches WHERE campaign_id=? AND tenant_id=? ORDER BY created_at DESC`
+  ).bind(campaignId, tenantId).all();
+  return ok(c, results ?? []);
+});
