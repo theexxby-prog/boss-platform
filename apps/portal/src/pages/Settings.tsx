@@ -80,7 +80,7 @@ export default function Settings() {
         <div className="card p-5">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-sm font-medium text-slate-300">API keys</h2>
-            <button className="text-xs style={{ color: "var(--primary-mid)" }} hover:text-white transition-colors">
+            <button className="text-xs font-medium transition-opacity hover:opacity-60" style={{ color: "var(--primary-mid)" }}>
               + Generate new key
             </button>
           </div>

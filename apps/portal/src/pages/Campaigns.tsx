@@ -161,7 +161,7 @@ function CampaignDetail({ campaign, onBack }: { campaign: Campaign; onBack: () =
             <option value="70">70+ (High)</option>
             <option value="45">45+ (Mid)</option>
           </select>
-          <button onClick={exportCsv} className="text-xs style={{ color: "var(--primary-mid)" }} hover:text-white transition-colors">
+          <button onClick={exportCsv} className="text-xs font-medium transition-opacity hover:opacity-60" style={{ color: "var(--primary-mid)" }}>
             Export CSV
           </button>
         </div>
