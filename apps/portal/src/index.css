@@ -1,0 +1,62 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --navy: #0F1923;
+  --navy-50: #1A2B3C;
+  --boss: #2E5FA3;
+  --boss-light: #4A7FC1;
+  --teal: #0D6B72;
+  --green: #1A6B3A;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  background: var(--navy);
+  color: #E2E8F0;
+  font-family: 'DM Sans', sans-serif;
+  margin: 0;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #334155; border-radius: 2px; }
+
+/* Score badge */
+.score-high  { background: rgba(26,107,58,0.2);  color: #22A05A; border: 1px solid rgba(26,107,58,0.4); }
+.score-mid   { background: rgba(46,95,163,0.2);  color: #4A7FC1; border: 1px solid rgba(46,95,163,0.4); }
+.score-low   { background: rgba(180,60,40,0.2);  color: #E07050; border: 1px solid rgba(180,60,40,0.4); }
+
+/* Status pill */
+.status-accepted  { background: rgba(26,107,58,0.15);  color: #22A05A; }
+.status-reviewing { background: rgba(180,130,0,0.15);  color: #D4A017; }
+.status-rejected  { background: rgba(180,60,40,0.15);  color: #E07050; }
+.status-duplicate { background: rgba(100,100,100,0.15); color: #94A3B8; }
+.status-enriching,.status-scoring,.status-ingested { background: rgba(46,95,163,0.15); color: #4A7FC1; }
+
+/* Card */
+.card {
+  background: #1A2B3C;
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer { to { background-position: 200% center; } }
+.skeleton {
+  background: linear-gradient(90deg, #1A2B3C 25%, #223344 50%, #1A2B3C 75%);
+  background-size: 200% auto;
+  animation: shimmer 1.4s linear infinite;
+  border-radius: 4px;
+}
+
+/* Mono data */
+.mono { font-family: 'DM Mono', monospace; }
+
+/* Fade in */
+@keyframes fadeUp { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:none; } }
+.fade-up { animation: fadeUp 0.3s ease both; }

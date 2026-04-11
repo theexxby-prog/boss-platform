@@ -12,9 +12,13 @@ import { domainsRouter } from "./routes/domains";
 import { invoicesRouter } from "./routes/invoices";
 import { leadsRouter } from "./routes/leads";
 import { webhooksRouter } from "./routes/webhooks";
+import { admin } from "./routes/admin";
 import { corsHeaders } from "./cors";
 import { ApiError, fail, makeRequestId, ok } from "./http";
 import type { AppVariables, EnvBindings } from "./types";
+import { runArChase } from "./crons/ar-chase";
+import { runRenewalAlerts } from "./crons/renewal-alerts";
+import { runDeliverabilityMonitor } from "./crons/deliverability-monitor";
 
 const app = new Hono<{ Bindings: EnvBindings; Variables: AppVariables }>().basePath("/api/v1");
 
@@ -46,6 +50,7 @@ app.route("/delivery", deliveryRouter);
 app.route("/invoices", invoicesRouter);
 app.route("/domains", domainsRouter);
 app.route("/webhooks", webhooksRouter);
+app.route("/admin", admin);
 
 app.notFound((c) => fail(c, 404, "NOT_FOUND", "Route not found"));
 
@@ -56,5 +61,40 @@ app.onError((error, c) => {
   const message = error instanceof Error ? error.message : "Unexpected server error";
   return fail(c, 500, "INTERNAL_SERVER_ERROR", message);
 });
+
+// ─── Cloudflare Cron Triggers ─────────────────────────────────────────────────
+
+interface ScheduledEvent {
+  cron: string;
+  scheduledTime: number;
+}
+
+interface CronEnv extends EnvBindings {
+  SLACK_WEBHOOK_URL?: string;
+  LEMWARM_API_KEY?: string;
+}
+
+export const scheduled = async (event: ScheduledEvent, env: CronEnv): Promise<void> => {
+  console.log(JSON.stringify({ event: "cron_triggered", cron: event.cron, scheduled_time: event.scheduledTime }));
+
+  switch (event.cron) {
+    case "0 9 * * *":
+      await runArChase({ DB: env.DB, KV: env.KV, SLACK_WEBHOOK_URL: env.SLACK_WEBHOOK_URL });
+      break;
+    case "0 8 * * *":
+      await runRenewalAlerts({ DB: env.DB, KV: env.KV, SLACK_WEBHOOK_URL: env.SLACK_WEBHOOK_URL });
+      break;
+    case "0 */6 * * *":
+      await runDeliverabilityMonitor({
+        DB: env.DB,
+        KV: env.KV,
+        SLACK_WEBHOOK_URL: env.SLACK_WEBHOOK_URL,
+        LEMWARM_API_KEY: env.LEMWARM_API_KEY,
+      });
+      break;
+    default:
+      console.warn(JSON.stringify({ event: "cron_unknown", cron: event.cron }));
+  }
+};
 
 export default app;

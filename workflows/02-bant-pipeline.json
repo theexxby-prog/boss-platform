@@ -1,0 +1,225 @@
+{
+  "name": "BOSS — BANT Pipeline (AI Qualification)",
+  "nodes": [
+    {
+      "id": "webhook-trigger",
+      "name": "BOSS Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "boss-bant-pipeline",
+        "responseMode": "lastNode",
+        "options": {}
+      }
+    },
+    {
+      "id": "validate-payload",
+      "name": "Validate Payload",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "has-lead-id",
+              "leftValue": "={{ $json.body?.lead_id ?? '' }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEquals" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "fetch-lead",
+      "name": "Fetch Lead from BOSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [680, 220],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BOSS_API_URL }}/api/v1/leads/{{ $json.body.lead_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.BOSS_API_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "claude-bant-qualify",
+      "name": "Claude — BANT Qualification",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "content-type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 512, temperature: 0, messages: [{ role: 'user', content: 'You are a BANT qualification expert for B2B demand generation. Score the following lead on Budget, Authority, Need, and Timeline. Each dimension: 0-25 points. Return ONLY valid JSON: {\"breakdown\":{\"budget\":N,\"authority\":N,\"need\":N,\"timeline\":N},\"reasoning\":\"brief explanation\"}.\\n\\nLead data:\\n' + JSON.stringify($json.data) }] }) }}",
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "parse-claude-response",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1120, 220],
+      "parameters": {
+        "mode": "manual",
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bant-result",
+              "name": "bant_result",
+              "value": "={{ JSON.parse($json.content?.[0]?.text ?? '{}') }}",
+              "type": "object"
+            },
+            {
+              "id": "bant-score",
+              "name": "bant_score",
+              "value": "={{ ($json.content?.[0]?.text ? JSON.parse($json.content[0].text) : {breakdown:{budget:0,authority:0,need:0,timeline:0}}).breakdown?.budget + ($json.content?.[0]?.text ? JSON.parse($json.content[0].text) : {}).breakdown?.authority + ($json.content?.[0]?.text ? JSON.parse($json.content[0].text) : {}).breakdown?.need + ($json.content?.[0]?.text ? JSON.parse($json.content[0].text) : {}).breakdown?.timeline }}",
+              "type": "number"
+            },
+            {
+              "id": "lead-id",
+              "name": "lead_id",
+              "value": "={{ $('BOSS Webhook Trigger').first().json.body.lead_id }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "route-by-score",
+      "name": "Route by BANT Score",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [1340, 220],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "score-threshold",
+              "leftValue": "={{ $json.bant_score }}",
+              "rightValue": 50,
+              "operator": { "type": "number", "operation": "gte" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "accept-lead",
+      "name": "Accept — Update BOSS Lead",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 140],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $env.BOSS_API_URL }}/api/v1/leads/{{ $json.lead_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.BOSS_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'accepted', bant_score: $json.bant_score, bant_budget: String($json.bant_result?.breakdown?.budget ?? 0), bant_authority: String($json.bant_result?.breakdown?.authority ?? 0), bant_need: String($json.bant_result?.breakdown?.need ?? 0), bant_timeline: String($json.bant_result?.breakdown?.timeline ?? 0), bant_notes: $json.bant_result?.reasoning ?? '' }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "ops-queue-lead",
+      "name": "Ops Queue — Below Threshold",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 340],
+      "parameters": {
+        "method": "PUT",
+        "url": "={{ $env.BOSS_API_URL }}/api/v1/leads/{{ $json.lead_id }}",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.BOSS_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ status: 'reviewing', bant_score: $json.bant_score, bant_notes: 'BANT score ' + $json.bant_score + '/100 — below threshold. Reasoning: ' + ($json.bant_result?.reasoning ?? 'None') }) }}",
+        "options": {}
+      }
+    },
+    {
+      "id": "reject-payload",
+      "name": "Return 400 — Bad Payload",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [680, 400],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ error: 'lead_id is required' }) }}",
+        "options": { "responseCode": 400 }
+      }
+    }
+  ],
+  "connections": {
+    "BOSS Webhook Trigger": {
+      "main": [[{ "node": "Validate Payload", "type": "main", "index": 0 }]]
+    },
+    "Validate Payload": {
+      "main": [
+        [{ "node": "Fetch Lead from BOSS", "type": "main", "index": 0 }],
+        [{ "node": "Return 400 — Bad Payload", "type": "main", "index": 0 }]
+      ]
+    },
+    "Fetch Lead from BOSS": {
+      "main": [[{ "node": "Claude — BANT Qualification", "type": "main", "index": 0 }]]
+    },
+    "Claude — BANT Qualification": {
+      "main": [[{ "node": "Parse Claude Response", "type": "main", "index": 0 }]]
+    },
+    "Parse Claude Response": {
+      "main": [[{ "node": "Route by BANT Score", "type": "main", "index": 0 }]]
+    },
+    "Route by BANT Score": {
+      "main": [
+        [{ "node": "Accept — Update BOSS Lead", "type": "main", "index": 0 }],
+        [{ "node": "Ops Queue — Below Threshold", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true
+  },
+  "tags": ["boss", "bant", "ai"],
+  "meta": { "instanceId": "REPLACE_WITH_N8N_INSTANCE_ID" }
+}

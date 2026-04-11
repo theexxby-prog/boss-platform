@@ -1,7 +1,7 @@
 // REF: boss-hq/worker/src/services/leadService.ts — state-machine style lifecycle transitions
 // CC-GATE 2: qualifyBant stub replaced with real implementation from services/bant-qualifier
 
-import type { CustomAnswer, CustomQuestion, EnrichedLead, IcpProfile, RawLead, ScoringResult } from "@boss/types";
+import type { EnrichedLead, IcpProfile, RawLead, ScoringResult } from "@boss/types";
 import type { D1Database, KVNamespace, Queue } from "@cloudflare/workers-types";
 
 import {
@@ -20,6 +20,7 @@ import { scoreLeadIcp } from "../services/icp-scorer";
 import { enrichLead } from "../services/enrichment";
 import { ProcessingError } from "../services/errors";
 import { qualifyBant, type BantLead, type BantCriteria } from "../services/bant-qualifier";
+import { answerCustomQuestions } from "../services/custom-q-answerer";
 
 export interface LeadProcessorMessage {
   lead_id: string;
@@ -51,12 +52,6 @@ async function enqueueOpsReview(env: ProcessLeadEnv, message: LeadProcessorMessa
     sla_deadline: Date.now() + 24 * 60 * 60 * 1000,
     updated_at: Date.now(),
   });
-}
-
-// CC-GATE: custom Q answerer stub — Claude Code implements this using Claude API
-async function answerCustomQuestions(_lead: EnrichedLead, _questions: CustomQuestion[]): Promise<CustomAnswer[]> {
-  // CC-GATE: Claude Code implements this using Claude API
-  throw new Error("CC-GATE: custom-Q answerer not yet implemented");
 }
 
 function toRawLead(record: Awaited<ReturnType<typeof getLeadById>>): RawLead {
@@ -166,23 +161,35 @@ export async function processLead(message: LeadProcessorMessage, env: ProcessLea
     if (campaign.product_tier !== "mql") {
       const questions = await getCustomQuestionsByCampaign(env.DB, message.tenant_id, message.campaign_id);
       if (questions.length > 0) {
+        let customAnswers;
         try {
-          await answerCustomQuestions(enrichedLead, questions);
+          customAnswers = await answerCustomQuestions(enrichedLead, questions, {
+            anthropicApiKey: env.ANTHROPIC_API_KEY,
+          });
         } catch (error) {
           await updateLeadStatus(
             env.DB,
             message.tenant_id,
             message.lead_id,
             "reviewing",
-            "Custom question answerer requires CC-GATE implementation",
+            "Custom Q answering failed",
           );
           await enqueueOpsReview(
             env,
             message,
-            `Custom Q gate: ${error instanceof Error ? error.message : String(error)}`,
+            `Custom Q error: ${error instanceof Error ? error.message : String(error)}`,
           );
           return;
         }
+        // Persist answers as JSON to the leads row
+        await env.DB.prepare(
+          `UPDATE leads SET custom_answers = ?, updated_at = ? WHERE id = ? AND tenant_id = ?`,
+        ).bind(
+          JSON.stringify(customAnswers),
+          Date.now(),
+          message.lead_id,
+          message.tenant_id,
+        ).run();
       }
     }
 

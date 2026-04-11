@@ -1,0 +1,104 @@
+{
+  "name": "BOSS — AR Chase (Manual Backup / Override)",
+  "nodes": [
+    {
+      "id": "manual-trigger",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 300],
+      "parameters": {}
+    },
+    {
+      "id": "fetch-overdue",
+      "name": "GET Overdue Invoices from BOSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BOSS_API_URL }}/api/v1/invoices/overdue",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.BOSS_API_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "split-invoices",
+      "name": "Split Into Individual Invoices",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300],
+      "parameters": {
+        "batchSize": 1,
+        "options": {}
+      }
+    },
+    {
+      "id": "post-chase",
+      "name": "POST Chase to BOSS Invoice",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [900, 300],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BOSS_API_URL }}/api/v1/invoices/{{ $json.id }}/send",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.BOSS_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ chase_override: true, note: 'Manual override via n8n AR chase workflow' }) }}",
+        "options": { "timeout": 10000 }
+      }
+    },
+    {
+      "id": "slack-chase-summary",
+      "name": "Slack Chase Summary",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1120, 300],
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "#finance",
+        "text": "💸 AR Chase run complete. {{ $('GET Overdue Invoices from BOSS').first().json.data?.length ?? 0 }} overdue invoices processed.",
+        "otherOptions": {}
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID",
+          "name": "BOSS Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [[{ "node": "GET Overdue Invoices from BOSS", "type": "main", "index": 0 }]]
+    },
+    "GET Overdue Invoices from BOSS": {
+      "main": [[{ "node": "Split Into Individual Invoices", "type": "main", "index": 0 }]]
+    },
+    "Split Into Individual Invoices": {
+      "main": [[{ "node": "POST Chase to BOSS Invoice", "type": "main", "index": 0 }]]
+    },
+    "POST Chase to BOSS Invoice": {
+      "main": [[{ "node": "Slack Chase Summary", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": ["boss", "ar", "finance"],
+  "meta": { "instanceId": "REPLACE_WITH_N8N_INSTANCE_ID" }
+}

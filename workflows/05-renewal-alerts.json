@@ -1,0 +1,131 @@
+{
+  "name": "BOSS — Renewal Alert (Manual / Cron Backup)",
+  "nodes": [
+    {
+      "id": "schedule-trigger",
+      "name": "Schedule Trigger (08:00 UTC Backup)",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 300],
+      "parameters": {
+        "rule": {
+          "interval": [{ "field": "cronExpression", "expression": "0 8 * * *" }]
+        }
+      }
+    },
+    {
+      "id": "fetch-campaigns",
+      "name": "GET Active Campaigns from BOSS",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [460, 300],
+      "parameters": {
+        "method": "GET",
+        "url": "={{ $env.BOSS_API_URL }}/api/v1/campaigns?status=active",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.BOSS_API_KEY }}" }
+          ]
+        },
+        "options": { "timeout": 15000 }
+      }
+    },
+    {
+      "id": "split-campaigns",
+      "name": "Split Into Campaigns",
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [680, 300],
+      "parameters": { "batchSize": 1, "options": {} }
+    },
+    {
+      "id": "check-completion",
+      "name": "At or Above 80% Delivered?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [900, 300],
+      "parameters": {
+        "conditions": {
+          "conditions": [
+            {
+              "id": "pct-check",
+              "leftValue": "={{ $json.leads_delivered / ($json.leads_ordered || 1) }}",
+              "rightValue": 0.8,
+              "operator": { "type": "number", "operation": "gte" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "slack-renewal",
+      "name": "Slack Renewal Alert",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1120, 220],
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "#bd-team",
+        "text": "={{ '🔔 Renewal Alert: \"' + $json.name + '\" is ' + Math.round(($json.leads_delivered / ($json.leads_ordered || 1)) * 100) + '% delivered (' + $json.leads_delivered + '/' + $json.leads_ordered + ' leads). Client: ' + ($json.client_id ?? 'Unknown') + '. Campaign value: $' + ($json.leads_ordered * $json.cpl).toLocaleString() + '. Start renewal conversation now.' }}",
+        "otherOptions": {}
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID",
+          "name": "BOSS Slack"
+        }
+      }
+    },
+    {
+      "id": "create-hubspot-task",
+      "name": "Create HubSpot Renewal Task",
+      "type": "n8n-nodes-base.hubspot",
+      "typeVersion": 2.2,
+      "position": [1340, 220],
+      "parameters": {
+        "resource": "task",
+        "operation": "create",
+        "additionalFields": {
+          "subject": "={{ 'Renewal: ' + $json.name }}",
+          "body": "={{ 'Campaign \"' + $json.name + '\" is ' + Math.round(($json.leads_delivered / ($json.leads_ordered || 1)) * 100) + '% delivered. Contact client to discuss renewal or upsell to next product tier.' }}",
+          "status": "NOT_STARTED",
+          "priority": "HIGH",
+          "duedate": "={{ new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString() }}"
+        }
+      },
+      "credentials": {
+        "hubspotApi": {
+          "id": "REPLACE_WITH_HUBSPOT_CREDENTIAL_ID",
+          "name": "BOSS HubSpot"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (08:00 UTC Backup)": {
+      "main": [[{ "node": "GET Active Campaigns from BOSS", "type": "main", "index": 0 }]]
+    },
+    "GET Active Campaigns from BOSS": {
+      "main": [[{ "node": "Split Into Campaigns", "type": "main", "index": 0 }]]
+    },
+    "Split Into Campaigns": {
+      "main": [[{ "node": "At or Above 80% Delivered?", "type": "main", "index": 0 }]]
+    },
+    "At or Above 80% Delivered?": {
+      "main": [
+        [{ "node": "Slack Renewal Alert", "type": "main", "index": 0 }],
+        []
+      ]
+    },
+    "Slack Renewal Alert": {
+      "main": [[{ "node": "Create HubSpot Renewal Task", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": { "executionOrder": "v1" },
+  "tags": ["boss", "renewals", "campaigns"],
+  "meta": { "instanceId": "REPLACE_WITH_N8N_INSTANCE_ID" }
+}

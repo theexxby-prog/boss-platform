@@ -1,0 +1,267 @@
+{
+  "name": "BOSS — Lead Ingestion from Aggregator Email",
+  "nodes": [
+    {
+      "id": "trigger-imap",
+      "name": "IMAP Email Trigger",
+      "type": "n8n-nodes-base.emailReadImap",
+      "typeVersion": 2,
+      "position": [240, 300],
+      "parameters": {
+        "mailbox": "INBOX",
+        "postProcessAction": "read",
+        "downloadAttachments": true,
+        "dataPropertyAttachmentsPrefixName": "attachment_",
+        "options": {
+          "allowUnauthorizedCerts": false,
+          "attachmentsFilter": "*.csv,*.xlsx"
+        }
+      },
+      "credentials": {
+        "imap": {
+          "id": "REPLACE_WITH_IMAP_CREDENTIAL_ID",
+          "name": "BOSS Aggregator IMAP"
+        }
+      }
+    },
+    {
+      "id": "filter-has-attachment",
+      "name": "Has CSV/Excel Attachment?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [460, 300],
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "has-attachment",
+              "leftValue": "={{ $json.attachments?.length ?? 0 }}",
+              "rightValue": 0,
+              "operator": { "type": "number", "operation": "gt" }
+            }
+          ],
+          "combinator": "and"
+        }
+      }
+    },
+    {
+      "id": "extract-campaign-id",
+      "name": "Extract Campaign ID from Subject",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [680, 220],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "campaign-id",
+              "name": "campaign_id",
+              "value": "={{ $json.subject?.match(/CAMPAIGN[:\\s]+([a-zA-Z0-9-]+)/i)?.[1] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "tenant-id",
+              "name": "tenant_id",
+              "value": "={{ $json.subject?.match(/TENANT[:\\s]+([a-zA-Z0-9-]+)/i)?.[1] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "from-email",
+              "name": "from_email",
+              "value": "={{ $json.from?.value?.[0]?.address ?? $json.from }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "parse-attachment",
+      "name": "Parse CSV/Excel Attachment",
+      "type": "n8n-nodes-base.spreadsheetFile",
+      "typeVersion": 2,
+      "position": [900, 220],
+      "parameters": {
+        "operation": "fromFile",
+        "binaryPropertyName": "attachment_0",
+        "options": {
+          "headerRow": true,
+          "includeEmptyCells": false,
+          "rawData": false
+        }
+      }
+    },
+    {
+      "id": "map-lead-fields",
+      "name": "Map to BOSS Lead Schema",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3,
+      "position": [1120, 220],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "first-name",
+              "name": "first_name",
+              "value": "={{ $json['First Name'] ?? $json['first_name'] ?? $json['FirstName'] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "last-name",
+              "name": "last_name",
+              "value": "={{ $json['Last Name'] ?? $json['last_name'] ?? $json['LastName'] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "email",
+              "name": "email",
+              "value": "={{ $json['Email'] ?? $json['email'] ?? $json['Email Address'] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "phone",
+              "name": "phone",
+              "value": "={{ $json['Phone'] ?? $json['phone'] ?? $json['Phone Number'] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "title",
+              "name": "title",
+              "value": "={{ $json['Title'] ?? $json['title'] ?? $json['Job Title'] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "company",
+              "name": "company",
+              "value": "={{ $json['Company'] ?? $json['company'] ?? $json['Company Name'] ?? '' }}",
+              "type": "string"
+            },
+            {
+              "id": "linkedin",
+              "name": "linkedin_url",
+              "value": "={{ $json['LinkedIn'] ?? $json['linkedin_url'] ?? $json['LinkedIn URL'] ?? '' }}",
+              "type": "string"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "aggregate-leads",
+      "name": "Aggregate into Batch",
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [1340, 220],
+      "parameters": {
+        "aggregate": "aggregateAllItemData",
+        "destinationFieldName": "leads",
+        "options": {}
+      }
+    },
+    {
+      "id": "post-to-boss",
+      "name": "POST to BOSS /leads/ingest",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 220],
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $env.BOSS_API_URL }}/api/v1/leads/ingest",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "X-API-Key", "value": "={{ $env.BOSS_API_KEY }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ campaign_id: $('Extract Campaign ID from Subject').first().json.campaign_id, leads: $json.leads }) }}",
+        "options": { "timeout": 30000 }
+      }
+    },
+    {
+      "id": "notify-slack",
+      "name": "Slack Result Notification",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [1780, 220],
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "#lead-ingestion",
+        "text": "={{ '✅ Lead ingestion complete from ' + $('Extract Campaign ID from Subject').first().json.from_email + '\\nCampaign: ' + $('Extract Campaign ID from Subject').first().json.campaign_id + '\\nQueued: ' + ($json.data?.queued ?? 0) + ' | Rejected: ' + ($json.data?.rejected ?? 0) + ' | Duplicates: ' + ($json.data?.duplicate ?? 0) }}",
+        "otherOptions": {}
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID",
+          "name": "BOSS Slack"
+        }
+      }
+    },
+    {
+      "id": "notify-no-attachment",
+      "name": "Slack — No Attachment Warning",
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.2,
+      "position": [680, 400],
+      "parameters": {
+        "operation": "postMessage",
+        "channel": "#lead-ingestion",
+        "text": "={{ '⚠️ Email received from ' + $json.from + ' with subject: \"' + $json.subject + '\" but no CSV/Excel attachment found. Please resend.' }}",
+        "otherOptions": {}
+      },
+      "credentials": {
+        "slackApi": {
+          "id": "REPLACE_WITH_SLACK_CREDENTIAL_ID",
+          "name": "BOSS Slack"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "IMAP Email Trigger": {
+      "main": [[{ "node": "Has CSV/Excel Attachment?", "type": "main", "index": 0 }]]
+    },
+    "Has CSV/Excel Attachment?": {
+      "main": [
+        [{ "node": "Extract Campaign ID from Subject", "type": "main", "index": 0 }],
+        [{ "node": "Slack — No Attachment Warning", "type": "main", "index": 0 }]
+      ]
+    },
+    "Extract Campaign ID from Subject": {
+      "main": [[{ "node": "Parse CSV/Excel Attachment", "type": "main", "index": 0 }]]
+    },
+    "Parse CSV/Excel Attachment": {
+      "main": [[{ "node": "Map to BOSS Lead Schema", "type": "main", "index": 0 }]]
+    },
+    "Map to BOSS Lead Schema": {
+      "main": [[{ "node": "Aggregate into Batch", "type": "main", "index": 0 }]]
+    },
+    "Aggregate into Batch": {
+      "main": [[{ "node": "POST to BOSS /leads/ingest", "type": "main", "index": 0 }]]
+    },
+    "POST to BOSS /leads/ingest": {
+      "main": [[{ "node": "Slack Result Notification", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "staticData": null,
+  "tags": ["boss", "lead-ingestion"],
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "REPLACE_WITH_N8N_INSTANCE_ID"
+  }
+}
