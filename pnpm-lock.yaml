@@ -30,7 +30,7 @@ importers:
         specifier: ^4.6.12
         version: 4.12.12
       papaparse:
-        specifier: ^5.4.1
+        specifier: ^5.5.3
         version: 5.5.3
       zod:
         specifier: ^3.24.1
@@ -40,7 +40,7 @@ importers:
         specifier: ^4.20260401.0
         version: 4.20260410.1
       '@types/papaparse':
-        specifier: ^5.3.16
+        specifier: ^5.5.2
         version: 5.5.2
       typescript:
         specifier: ^5.8.2

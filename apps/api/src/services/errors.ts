@@ -63,3 +63,10 @@ export class WebhookError extends ServiceError {
     this.name = "WebhookError";
   }
 }
+
+export class CustomQuestionError extends ServiceError {
+  constructor(code: string, message: string, details?: Record<string, unknown>) {
+    super(code, message, 500, details);
+    this.name = "CustomQuestionError";
+  }
+}
